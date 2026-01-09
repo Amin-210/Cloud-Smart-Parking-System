@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – SmartParking</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="index.html">SmartParking</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Startseite</a></li>
+        <li class="nav-item"><a class="nav-link" href="registrierung.html">Registrierung</a></li>
+        <li class="nav-item"><a class="nav-link active fw-semibold" href="login.html">Login</a></li>
+        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
+      </ul>
+      <div class="d-flex gap-2">
+        <button id="toggleDarkMode" class="btn btn-outline-secondary btn-sm">🌙</button>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm d-none">Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+        <div class="p-4 sp-card bg-white">
+          <h2 class="fw-bold">Login</h2>
+          <p class="sp-subtle mb-4">Melden Sie sich an, um das Dashboard zu nutzen.</p>
+
+          <form id="loginForm">
+            <div class="mb-3">
+              <label class="form-label" for="loginEmail">E-Mail</label>
+              <input class="form-control" type="email" id="loginEmail" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="loginPassword">Passwort</label>
+              <input class="form-control" type="password" id="loginPassword" required>
+            </div>
+            <div id="loginError" class="text-danger mb-3"></div>
+            <button class="btn btn-primary w-100" type="submit">Einloggen</button>
+          </form>
+
+          <hr class="my-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="sp-subtle">Noch kein Konto?</div>
+            <a href="registrierung.html" class="btn btn-outline-success btn-sm">Registrieren</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="auth.js"></script>
+  <script src="smartparking.js"></script>
+</body>
+</html>

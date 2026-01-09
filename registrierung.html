@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrierung – SmartParking</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="index.html">SmartParking</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Startseite</a></li>
+        <li class="nav-item"><a class="nav-link active fw-semibold" href="registrierung.html">Registrierung</a></li>
+        <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
+      </ul>
+      <div class="d-flex gap-2">
+        <button id="toggleDarkMode" class="btn btn-outline-secondary btn-sm">🌙</button>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm d-none">Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <div class="p-4 sp-card bg-white">
+          <h2 class="fw-bold">Registrierung</h2>
+          <p class="sp-subtle mb-4">Erstellen Sie ein Konto, um Spots zu reservieren und Tickets zu verwalten.</p>
+
+          <form id="registerForm">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label" for="anrede">Anrede</label>
+                <select class="form-select" id="anrede" required>
+                  <option value="">Bitte wählen</option>
+                  <option>Herr</option>
+                  <option>Frau</option>
+                  <option>Divers</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="vorname">Vorname</label>
+                <input class="form-control" type="text" id="vorname" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="nachname">Nachname</label>
+                <input class="form-control" type="text" id="nachname" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="email">E-Mail</label>
+                <input class="form-control" type="email" id="email" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="emailRepeat">E-Mail wiederholen</label>
+                <input class="form-control" type="email" id="emailRepeat" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="password">Passwort</label>
+                <input class="form-control" type="password" id="password" minlength="6" required>
+                <div class="form-text">Mindestens 6 Zeichen (Demo).</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="passwordRepeat">Passwort wiederholen</label>
+                <input class="form-control" type="password" id="passwordRepeat" minlength="6" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="geburtsdatum">Geburtsdatum</label>
+                <input class="form-control" type="date" id="geburtsdatum" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="plz">PLZ</label>
+                <input class="form-control" type="text" id="plz" placeholder="z.B. 10115" required>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label" for="carPlate">Kennzeichen</label>
+                <input class="form-control" type="text" id="carPlate" placeholder="z.B. B-AB 1234" required>
+              </div>
+            </div>
+
+            <div id="errorMsg" class="text-danger mt-3"></div>
+
+            <div class="d-flex gap-2 mt-4">
+              <button type="submit" class="btn btn-success flex-grow-1">Registrieren</button>
+              <a href="login.html" class="btn btn-outline-primary">Zum Login</a>
+            </div>
+          </form>
+
+          <div id="successMessage" class="mt-4 d-none">
+            <div class="alert alert-success mb-3">Registrierung erfolgreich! Bitte jetzt einloggen.</div>
+            <a href="login.html" class="btn btn-primary w-100">Weiter</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="auth.js"></script>
+  <script src="smartparking.js"></script>
+</body>
+</html>
