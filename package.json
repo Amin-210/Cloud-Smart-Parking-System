@@ -1,0 +1,14 @@
+{
+  "name": "smart-parking-backend",
+  "version": "1.0.0",
+  "description": "Simple university demo backend for SmartParking",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "express": "^4.21.0"
+  }
+}
+

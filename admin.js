@@ -1,12 +1,6 @@
-/* Admin simulation */
+/* Admin-Simulation mit Backend-API */
 
-const adminEvents = [
-  { name: "📢 Rush Hour: +5 Spots belegt", fn: (lot) => occupyRandom(lot, 5) },
-  { name: "🌧️ Regen: +3 Spots belegt", fn: (lot) => occupyRandom(lot, 3) },
-  { name: "🎉 Event in der Nähe: +8 Spots belegt", fn: (lot) => occupyRandom(lot, 8) },
-  { name: "🚓 Kontrolle: +4 Spots frei", fn: (lot) => freeRandom(lot, 4) },
-  { name: "😐 Ruhiger Betrieb: keine Änderung", fn: (lot) => lot }
-];
+const API_BASE = "http://127.0.0.1:3000";
 
 document.addEventListener("DOMContentLoaded", () => {
   const randomOccupyBtn = document.getElementById("randomOccupy");
@@ -14,94 +8,144 @@ document.addEventListener("DOMContentLoaded", () => {
   const randomEventBtn = document.getElementById("randomEvent");
   const resetBtn = document.getElementById("resetDemo");
 
-  randomOccupyBtn.addEventListener("click", () => {
-    const lot = spLoad(SP_KEYS.LOT, null);
-    occupyRandom(lot, 4);
-    spSave(SP_KEYS.LOT, lot);
-    showMsg("🚧 Sensor-Update: Plätze wurden belegt.");
-    renderStatus();
-  });
+  // Erst prüfen, ob User eingeloggt ist
+  checkAuthAndInit();
 
-  randomFreeBtn.addEventListener("click", () => {
-    const lot = spLoad(SP_KEYS.LOT, null);
-    freeRandom(lot, 4);
-    spSave(SP_KEYS.LOT, lot);
-    showMsg("✅ Sensor-Update: Plätze wurden freigegeben.");
-    renderStatus();
-  });
+  if (randomOccupyBtn) {
+    randomOccupyBtn.addEventListener("click", () =>
+      adminAction("/api/admin/random-occupy", { count: 4 }, "🚧 Sensor-Update: Plätze wurden belegt.")
+    );
+  }
 
-  randomEventBtn.addEventListener("click", () => {
-    const lot = spLoad(SP_KEYS.LOT, null);
-    const ev = adminEvents[Math.floor(Math.random() * adminEvents.length)];
-    ev.fn(lot);
-    spSave(SP_KEYS.LOT, lot);
-    showMsg(ev.name);
-    renderStatus();
-  });
+  if (randomFreeBtn) {
+    randomFreeBtn.addEventListener("click", () =>
+      adminAction("/api/admin/random-free", { count: 4 }, "✅ Sensor-Update: Plätze wurden freigegeben.")
+    );
+  }
 
-  resetBtn.addEventListener("click", () => {
-    if(!confirm("Demo-Daten wirklich zurücksetzen?")) return;
-    localStorage.removeItem(SP_KEYS.USERS);
-    localStorage.removeItem(SP_KEYS.SESSION);
-    localStorage.removeItem(SP_KEYS.LOT);
-    localStorage.removeItem(SP_KEYS.TICKETS);
-    spEnsureDemoLot();
-    showMsg("♻️ Demo-Daten wurden zurückgesetzt.");
-    renderStatus();
-  });
+  if (randomEventBtn) {
+    randomEventBtn.addEventListener("click", () =>
+      adminAction("/api/admin/random-event", {}, null) // Text kommt vom Server
+    );
+  }
 
-  renderStatus();
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (!confirm("Demo-Daten wirklich zurücksetzen?")) return;
+      adminAction("/api/admin/reset-demo", {}, "♻️ Demo-Daten wurden zurückgesetzt.");
+    });
+  }
 });
 
-function showMsg(text){
+// Prüft Login über /api/me und lädt initialen Status
+async function checkAuthAndInit() {
+  try {
+    const res = await fetch(API_BASE + "/api/me", {
+      credentials: "include"
+    });
+
+    if (res.status === 401) {
+      // Nicht eingeloggt -> zum Login
+      window.location.href = "login.html";
+      return;
+    }
+
+    // User-Info könntest du hier nutzen, falls du auf der Admin-Seite etwas anzeigen willst
+  } catch (err) {
+    console.error("Fehler bei /api/me (Admin):", err);
+    window.location.href = "login.html";
+    return;
+  }
+
+  // Wenn Session ok -> Status anzeigen
+  renderStatus();
+}
+
+async function adminAction(path, body, fallbackMsg) {
+  try {
+    const res = await fetch(API_BASE + path, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include"
+      ,
+      body: JSON.stringify(body || {})
+    });
+
+    if (!res.ok) {
+      let msg = "Aktion fehlgeschlagen.";
+      try {
+        const data = await res.json();
+        if (data && data.error) msg = data.error;
+      } catch (_) {}
+      alert(msg);
+      return;
+    }
+
+    const data = await res.json();
+    if (data && data.message) {
+      showMsg(data.message);
+    } else if (fallbackMsg) {
+      showMsg(fallbackMsg);
+    }
+
+    renderStatus();
+  } catch (err) {
+    console.error("Admin-Aktion Fehler:", err);
+    alert("Netzwerkfehler bei der Admin-Aktion.");
+  }
+}
+
+function showMsg(text) {
   const el = document.getElementById("adminMsg");
-  el.textContent = text;
+  if (el) el.textContent = text;
 }
 
-function occupyRandom(lot, n){
-  if(!lot) return;
-  const candidates = lot.spots.filter(s => s.status === "AVAILABLE");
-  shuffle(candidates);
-  candidates.slice(0, n).forEach(s => {
-    s.status = "OCCUPIED";
-    s.occupiedBy = "__sensor__";
-    s.occupiedSince = spNowIso();
-  });
-}
-
-function freeRandom(lot, n){
-  if(!lot) return;
-  const candidates = lot.spots.filter(s => s.status === "OCCUPIED" && s.occupiedBy === "__sensor__");
-  shuffle(candidates);
-  candidates.slice(0, n).forEach(s => {
-    s.status = "AVAILABLE";
-    s.occupiedBy = null;
-    s.occupiedSince = null;
-  });
-}
-
-function renderStatus(){
-  spCleanupExpiredReservations();
-  const lot = spLoad(SP_KEYS.LOT, null);
+async function renderStatus() {
   const ul = document.getElementById("statusList");
+  if (!ul) return;
   ul.innerHTML = "";
 
-  const free = lot.spots.filter(s => s.status === "AVAILABLE").length;
-  const reserved = lot.spots.filter(s => s.status === "RESERVED").length;
-  const occupied = lot.spots.filter(s => s.status === "OCCUPIED").length;
+  try {
+    // Lot + Statistik parallel laden
+    const [lotRes, statsRes] = await Promise.all([
+      fetch(API_BASE + "/api/lot", { credentials: "include" }),
+      fetch(API_BASE + "/api/admin/stats", { credentials: "include" })
+    ]);
 
-  ul.innerHTML = `
-    <li>Freie Plätze: <strong>${free}</strong></li>
-    <li>Reserviert: <strong>${reserved}</strong></li>
-    <li>Belegt: <strong>${occupied}</strong></li>
-    <li>Tickets (gesamt): <strong>${spLoad(SP_KEYS.TICKETS, []).length}</strong></li>
-    <li>Nutzer (registriert): <strong>${spLoad(SP_KEYS.USERS, []).length}</strong></li>
-  `;
-}
+    if (lotRes.status === 401) {
+      window.location.href = "login.html";
+      return;
+    }
 
-function shuffle(arr){
-  for(let i=arr.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    const lot = await lotRes.json();
+    let stats = { users: null, tickets: null };
+    if (statsRes.ok) {
+      stats = await statsRes.json();
+    }
+
+    const free = lot.spots.filter((s) => s.status === "AVAILABLE").length;
+    const reserved = lot.spots.filter((s) => s.status === "RESERVED").length;
+    const occupied = lot.spots.filter((s) => s.status === "OCCUPIED").length;
+
+    let html = `
+      <li>Freie Plätze: <strong>${free}</strong></li>
+      <li>Reserviert: <strong>${reserved}</strong></li>
+      <li>Belegt: <strong>${occupied}</strong></li>
+    `;
+
+    if (typeof stats.tickets === "number") {
+      html += `<li>Tickets (gesamt): <strong>${stats.tickets}</strong></li>`;
+    }
+    if (typeof stats.users === "number") {
+      html += `<li>Nutzer (registriert): <strong>${stats.users}</strong></li>`;
+    }
+
+    ul.innerHTML = html;
+  } catch (err) {
+    console.error("Fehler bei Admin-Status:", err);
+    ul.innerHTML =
+      '<li class="text-danger">Status konnte nicht geladen werden.</li>';
   }
 }

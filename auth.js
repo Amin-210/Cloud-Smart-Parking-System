@@ -1,11 +1,15 @@
-/* Registration + Login (localStorage) */
+/* Registration + Login über Backend-API (statt localStorage) */
+
+const API_BASE = "http://127.0.0.1:3000";
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const regForm = document.getElementById("registerForm");
   const loginForm = document.getElementById("loginForm");
 
-  if(regForm){
-    regForm.addEventListener("submit", (e) => {
+  // ---------- REGISTRIERUNG ----------
+  if (regForm) {
+    regForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const anrede = document.getElementById("anrede").value.trim();
@@ -22,47 +26,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
       errorMsg.textContent = "";
 
-      if(email !== emailRepeat){
+      // --- Client-Validierung wie vorher ---
+      if (email !== emailRepeat) {
         errorMsg.textContent = "Die E-Mail-Adressen stimmen nicht überein.";
         return;
       }
-      if(password !== passwordRepeat){
+      if (password !== passwordRepeat) {
         errorMsg.textContent = "Die Passwörter stimmen nicht überein.";
         return;
       }
-      if(!/^\d{5}$/.test(plz)){
+      if (!/^\d{5}$/.test(plz)) {
         errorMsg.textContent = "Bitte geben Sie eine gültige 5-stellige PLZ ein.";
         return;
       }
 
       const age = calculateAge(new Date(geburtsdatum));
-      if(age < 18){
+      if (age < 18) {
         errorMsg.textContent = "Sie müssen mindestens 18 Jahre alt sein.";
         return;
       }
 
-      const users = spLoad(SP_KEYS.USERS, []);
-      if(users.some(u => u.email.toLowerCase() === email.toLowerCase())){
-        errorMsg.textContent = "Diese E-Mail ist bereits registriert.";
-        return;
+      // --- Request an Backend senden ---
+      try {
+        const res = await fetch(API_BASE + "/api/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            anrede,
+            vorname,
+            nachname,
+            email,
+            password,
+            geburtsdatum,
+            plz,
+            carPlate
+          })
+        });
+
+        if (!res.ok) {
+          let msg = "Fehler bei der Registrierung.";
+          try {
+            const data = await res.json();
+            if (data && data.error) msg = data.error;
+          } catch (_) {}
+          errorMsg.textContent = msg;
+          return;
+        }
+
+        // Erfolgreich -> Formular ausblenden, Erfolgsbox zeigen
+        document.getElementById("registerForm").classList.add("d-none");
+        document.getElementById("successMessage").classList.remove("d-none");
+      } catch (err) {
+        console.error(err);
+        errorMsg.textContent = "Netzwerkfehler. Bitte später erneut versuchen.";
       }
-
-      users.push({
-        id: crypto.randomUUID(),
-        anrede, vorname, nachname, email,
-        passwordHash: simpleHash(password), // demo only
-        geburtsdatum, plz,
-        carPlate
-      });
-      spSave(SP_KEYS.USERS, users);
-
-      document.getElementById("registerForm").classList.add("d-none");
-      document.getElementById("successMessage").classList.remove("d-none");
     });
   }
 
-  if(loginForm){
-    loginForm.addEventListener("submit", (e) => {
+  // ---------- LOGIN ----------
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const email = document.getElementById("loginEmail").value.trim();
@@ -70,32 +96,52 @@ document.addEventListener("DOMContentLoaded", () => {
       const loginError = document.getElementById("loginError");
       loginError.textContent = "";
 
-      const user = spGetUserByEmail(email);
-      if(!user || user.passwordHash !== simpleHash(password)){
-        loginError.textContent = "Login fehlgeschlagen. Bitte prüfen Sie E-Mail/Passwort.";
-        return;
-      }
+      try {
+        const res = await fetch(API_BASE + "/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include", // wichtig für Cookie-Session
+          body: JSON.stringify({ email, password })
+        });
 
-      spSetSession({ userId: user.id, email: user.email, loginAt: spNowIso() });
-      window.location.href = "dashboard.html";
+        if (!res.ok) {
+          let msg = "Login fehlgeschlagen. Bitte prüfen Sie E-Mail/Passwort.";
+          try {
+            const data = await res.json();
+            if (data && data.error) msg = data.error;
+          } catch (_) {}
+          loginError.textContent = msg;
+          return;
+        }
+
+        const data = await res.json();
+
+        // Demo: zusätzlich lokale Session setzen,
+        // damit dein bestehendes Frontend (spGetSession) weiter funktioniert
+        if (data && data.user) {
+          spSetSession({
+            userId: data.user.id,
+            email: email,
+            loginAt: spNowIso()
+          });
+        }
+
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        console.error(err);
+        loginError.textContent =
+          "Netzwerkfehler beim Login. Bitte später erneut versuchen.";
+      }
     });
   }
 });
 
-function calculateAge(birthday){
+function calculateAge(birthday) {
   const today = new Date();
   let age = today.getFullYear() - birthday.getFullYear();
   const m = today.getMonth() - birthday.getMonth();
-  if(m < 0 || (m === 0 && today.getDate() < birthday.getDate())) age--;
+  if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) age--;
   return age;
-}
-
-// NOT cryptographically secure. Demo only.
-function simpleHash(str){
-  let h = 0;
-  for(let i=0;i<str.length;i++){
-    h = (h<<5) - h + str.charCodeAt(i);
-    h |= 0;
-  }
-  return String(h);
 }
