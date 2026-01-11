@@ -1,6 +1,6 @@
 /* Admin-Simulation mit Backend-API */
 
-const API_BASE = "http://127.0.0.1:3000";
+const API_BASE = "https://smart-parking-backend-e6e9eccqng5cpda.eastus-01.azurewebsites.net";
 
 document.addEventListener("DOMContentLoaded", () => {
   const randomOccupyBtn = document.getElementById("randomOccupy");
@@ -13,13 +13,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (randomOccupyBtn) {
     randomOccupyBtn.addEventListener("click", () =>
-      adminAction("/api/admin/random-occupy", { count: 4 }, "🚧 Sensor-Update: Plätze wurden belegt.")
+      adminAction(
+        "/api/admin/random-occupy",
+        { count: 4 },
+        "🚧 Sensor-Update: Plätze wurden belegt."
+      )
     );
   }
 
   if (randomFreeBtn) {
     randomFreeBtn.addEventListener("click", () =>
-      adminAction("/api/admin/random-free", { count: 4 }, "✅ Sensor-Update: Plätze wurden freigegeben.")
+      adminAction(
+        "/api/admin/random-free",
+        { count: 4 },
+        "✅ Sensor-Update: Plätze wurden freigegeben."
+      )
     );
   }
 
@@ -32,7 +40,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       if (!confirm("Demo-Daten wirklich zurücksetzen?")) return;
-      adminAction("/api/admin/reset-demo", {}, "♻️ Demo-Daten wurden zurückgesetzt.");
+      adminAction(
+        "/api/admin/reset-demo",
+        {},
+        "♻️ Demo-Daten wurden zurückgesetzt."
+      );
     });
   }
 });
@@ -68,8 +80,7 @@ async function adminAction(path, body, fallbackMsg) {
       headers: {
         "Content-Type": "application/json"
       },
-      credentials: "include"
-      ,
+      credentials: "include",
       body: JSON.stringify(body || {})
     });
 
