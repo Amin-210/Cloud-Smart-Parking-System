@@ -1,15 +1,16 @@
-/* Admin Simulation */
+/* Admin-Simulation mit Backend-API */
 
-// BACKEND URLs
+/* --- Backend-URLs --- */
 const AZURE_BACKEND = "https://smart-parking-backend-e6e9eccqcng5cpda.eastus-01.azurewebsites.net";
 const LOCAL_BACKEND = "http://127.0.0.1:3000";
 
-const API_BASE = window.location.hostname.endsWith("azurestaticapps.net")
-  ? AZURE_BACKEND
-  : LOCAL_BACKEND;
+const hostname = window.location.hostname;
+const IS_LOCAL =
+  hostname === "localhost" ||
+  hostname === "127.0.0.1";
 
-
-
+const API_BASE = IS_LOCAL ? LOCAL_BACKEND : AZURE_BACKEND;
+console.log("API_BASE (admin.js):", API_BASE);
 
 document.addEventListener("DOMContentLoaded", () => {
   const randomOccupyBtn = document.getElementById("randomOccupy");
@@ -19,6 +20,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Erst prüfen, ob User eingeloggt ist
   checkAuthAndInit();
+  
+});
+
 
   if (randomOccupyBtn) {
     randomOccupyBtn.addEventListener("click", () =>
