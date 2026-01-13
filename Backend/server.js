@@ -4,7 +4,6 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
-const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -161,19 +160,31 @@ function freeRandom(lot, n) {
 app.use(express.json());
 app.use(cookieParser());
 
-/**
- * CORS-Konfiguration:
- * - Erlaubt alle Origins, gibt aber immer das konkrete Origin zurück (nicht "*"),
- *   damit Cookies (credentials) funktionieren.
- */
-const corsOptions = {
-  origin: true,      // reflektiert automatisch den Origin-Header
-  credentials: true  // erlaubt Cookies / Auth-Header
-};
+// ===== Manuelle CORS-Konfiguration =====
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-app.use(cors(corsOptions));
-// explizit für Preflight-Requests (OPTIONS)
-app.options("*", cors(corsOptions));
+  if (origin) {
+    // Konkretes Origin zurückgeben (wichtig für Credentials)
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+  }
+
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma"
+  );
+
+  if (req.method === "OPTIONS") {
+    // Preflight-Request hier direkt beantworten
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+// ===== Ende CORS-Konfiguration =====
 
 // -------- Auth-Middleware --------
 function requireAuth(req, res, next) {
