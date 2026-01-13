@@ -1,16 +1,7 @@
 /* Admin-Simulation mit Backend-API */
 
-/* --- Backend-URLs --- */
-const AZURE_BACKEND = "https://smart-parking-backend-e6e9eccqcng5cpda.eastus-01.azurewebsites.net";
-const LOCAL_BACKEND = "http://127.0.0.1:3000";
-
-const hostname = window.location.hostname;
-const IS_LOCAL =
-  hostname === "localhost" ||
-  hostname === "127.0.0.1";
-
-const API_BASE = IS_LOCAL ? LOCAL_BACKEND : AZURE_BACKEND;
-console.log("API_BASE (admin.js):", API_BASE);
+// 👉 Immer Azure-Backend benutzen
+const API_BASE = "https://smart-parking-backend-e6e9eccqcng5cpda.eastus-01.azurewebsites.net";
 
 document.addEventListener("DOMContentLoaded", () => {
   const randomOccupyBtn = document.getElementById("randomOccupy");
@@ -18,11 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const randomEventBtn = document.getElementById("randomEvent");
   const resetBtn = document.getElementById("resetDemo");
 
-  // Erst prüfen, ob User eingeloggt ist
   checkAuthAndInit();
-  
-});
-
 
   if (randomOccupyBtn) {
     randomOccupyBtn.addEventListener("click", () =>
@@ -46,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (randomEventBtn) {
     randomEventBtn.addEventListener("click", () =>
-      adminAction("/api/admin/random-event", {}, null) // Text kommt vom Server
+      adminAction("/api/admin/random-event", {}, null)
     );
   }
 
@@ -70,19 +57,15 @@ async function checkAuthAndInit() {
     });
 
     if (res.status === 401) {
-      // Nicht eingeloggt -> zum Login
       window.location.href = "login.html";
       return;
     }
-
-    // User-Info könntest du hier nutzen, falls du auf der Admin-Seite etwas anzeigen willst
   } catch (err) {
     console.error("Fehler bei /api/me (Admin):", err);
     window.location.href = "login.html";
     return;
   }
 
-  // Wenn Session ok -> Status anzeigen
   renderStatus();
 }
 
@@ -132,7 +115,6 @@ async function renderStatus() {
   ul.innerHTML = "";
 
   try {
-    // Lot + Statistik parallel laden
     const [lotRes, statsRes] = await Promise.all([
       fetch(API_BASE + "/api/lot", { credentials: "include" }),
       fetch(API_BASE + "/api/admin/stats", { credentials: "include" })
