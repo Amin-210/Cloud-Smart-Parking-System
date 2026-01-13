@@ -1,6 +1,7 @@
-/* Registration + Login über Backend-API (statt localStorage) */
+/* Registration + Login über Backend-API */
 
-const API_BASE = "http://127.0.0.1:3000";
+// 👉 Immer Azure-Backend benutzen
+const API_BASE = "https://smart-parking-backend-e6e9eccqcng5cpda.eastus-01.azurewebsites.net";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -26,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       errorMsg.textContent = "";
 
-      // --- Client-Validierung wie vorher ---
+      // --- Client-Validierung ---
       if (email !== emailRepeat) {
         errorMsg.textContent = "Die E-Mail-Adressen stimmen nicht überein.";
         return;
