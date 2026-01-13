@@ -26,7 +26,6 @@ jobs:
         working-directory: Backend
         run: npm install
 
-      # Optional: falls du später Tests hast – aktuell ignorieren wir Fehler
       - name: Run tests (optional)
         working-directory: Backend
         run: npm test
@@ -35,7 +34,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          # ⬇⬇⬇ HIER deinen echten Web-App Namen einsetzen!
-          app-name: "smart-parking-backend"
+          app-name: "smart-parking-backend-e6e9eccqcng5cpda"
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: "Backend"
