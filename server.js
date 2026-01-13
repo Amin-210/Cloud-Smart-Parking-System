@@ -4,6 +4,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -160,21 +161,32 @@ function freeRandom(lot, n) {
 app.use(express.json());
 app.use(cookieParser());
 
-// WICHTIG: Keine statischen Dateien – dein Frontend läuft über Live Server (Port 5500)
-// app.use(express.static(path.join(__dirname, "public")));
+/**
+ * CORS sauber konfigurieren:
+ * - Lokale Entwicklung (Live Server)
+ * - Azure Static Web App Frontend
+ */
+const allowedOrigins = [
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+  "http://localhost:3000",
+  "https://ambitious-ocean-082f71010.1.azurestaticapps.net"
+];
 
-// einfache CORS-Freigabe für dein Frontend (127.0.0.1:5500)
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  if (req.method === "OPTIONS") return res.sendStatus(200);
-  next();
-});
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // z.B. bei Postman/Curl gibt es kein Origin -> erlauben
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      console.log("CORS blockiert Origin:", origin);
+      return callback(null, false);
+    },
+    credentials: true
+  })
+);
 
 // -------- Auth-Middleware --------
 function requireAuth(req, res, next) {
@@ -251,9 +263,13 @@ app.post("/api/login", function (req, res) {
     loginAt: nowIso()
   };
 
+  // In Azure (HTTPS, andere Domain) brauchen wir SameSite=None + secure
+  const isProduction = process.env.WEBSITE_SITE_NAME ? true : false;
+
   res.cookie("sid", sid, {
     httpOnly: true,
-    sameSite: "lax"
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction
   });
 
   res.json({
