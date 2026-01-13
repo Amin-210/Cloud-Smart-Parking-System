@@ -162,31 +162,18 @@ app.use(express.json());
 app.use(cookieParser());
 
 /**
- * CORS sauber konfigurieren:
- * - Lokale Entwicklung (Live Server)
- * - Azure Static Web App Frontend
+ * CORS-Konfiguration:
+ * - Erlaubt alle Origins, gibt aber immer das konkrete Origin zurück (nicht "*"),
+ *   damit Cookies (credentials) funktionieren.
  */
-const allowedOrigins = [
-  "http://localhost:5500",
-  "http://127.0.0.1:5500",
-  "http://localhost:3000",
-  "https://ambitious-ocean-082f71010.1.azurestaticapps.net"
-];
+const corsOptions = {
+  origin: true,      // reflektiert automatisch den Origin-Header
+  credentials: true  // erlaubt Cookies / Auth-Header
+};
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // z.B. bei Postman/Curl gibt es kein Origin -> erlauben
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        return callback(null, true);
-      }
-      console.log("CORS blockiert Origin:", origin);
-      return callback(null, false);
-    },
-    credentials: true
-  })
-);
+app.use(cors(corsOptions));
+// explizit für Preflight-Requests (OPTIONS)
+app.options("*", cors(corsOptions));
 
 // -------- Auth-Middleware --------
 function requireAuth(req, res, next) {

@@ -1,8 +1,7 @@
 /* Dashboard logic mit Backend-API */
 
-const API_BASE = "http://127.0.0.1:3000";
-
-
+// 👉 Immer Azure-Backend benutzen
+const API_BASE = "https://smart-parking-backend-e6e9eccqcng5cpda.eastus-01.azurewebsites.net";
 
 let selectedSpotId = null;
 let currentUser = null;
@@ -20,7 +19,6 @@ async function initDashboard() {
     });
 
     if (meRes.status === 401) {
-      // nicht eingeloggt -> zurück zum Login
       window.location.href = "login.html";
       return;
     }
@@ -34,12 +32,10 @@ async function initDashboard() {
     }
   } catch (err) {
     console.error("Fehler bei /api/me:", err);
-    // zur Sicherheit zurück zum Login
     window.location.href = "login.html";
     return;
   }
 
-  // 2) Filter & Buttons verdrahten
   const zoneFilter = document.getElementById("zoneFilter");
   const typeFilter = document.getElementById("typeFilter");
   if (zoneFilter) zoneFilter.addEventListener("change", () => renderAll(true));
@@ -49,10 +45,8 @@ async function initDashboard() {
   document.getElementById("checkinBtn").addEventListener("click", () => doCheckin());
   document.getElementById("checkoutBtn").addEventListener("click", () => doCheckout());
 
-  // 3) Erstes Laden des Lots
   await fetchLotAndRender(true);
 
-  // 4) Alle 10s neu laden (inkl. abgelaufene Reservierungen)
   setInterval(() => {
     fetchLotAndRender(false);
   }, 10000);
@@ -87,7 +81,6 @@ function renderAll(scrollToGrid = true) {
   const zone = document.getElementById("zoneFilter").value;
   const type = document.getElementById("typeFilter").value;
 
-  // KPIs
   const free = lot.spots.filter((s) => s.status === "AVAILABLE").length;
   const reserved = lot.spots.filter((s) => s.status === "RESERVED").length;
   const occupied = lot.spots.filter((s) => s.status === "OCCUPIED").length;
@@ -96,7 +89,6 @@ function renderAll(scrollToGrid = true) {
   document.getElementById("kpiReserved").textContent = reserved;
   document.getElementById("kpiOccupied").textContent = occupied;
 
-  // Grid
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
 
@@ -134,7 +126,6 @@ function renderAll(scrollToGrid = true) {
     grid.appendChild(el);
   }
 
-  // Auswahl wiederherstellen
   if (selectedSpotId) {
     selectSpot(selectedSpotId, false);
   } else {
@@ -153,7 +144,6 @@ function selectSpot(spotId, scroll = true) {
   const spot = lot.spots.find((s) => s.id === spotId);
   updateActionPanel(spot);
 
-  // highlight
   document.querySelectorAll(".spot").forEach((e) => {
     if (e.dataset.id === spotId)
       e.style.boxShadow = "0 0 0 3px rgba(13,110,253,.35)";
@@ -258,10 +248,7 @@ async function doCheckin() {
       return;
     }
 
-    const data = await res.json();
     await fetchLotAndRender(false);
-    // optional: kurze Info
-    // alert(`Check-in auf Spot ${data.spot.spotCode || selectedSpotId} erfolgreich.`);
   } catch (err) {
     console.error("Fehler bei Checkin:", err);
     alert("Netzwerkfehler beim Check-in.");
