@@ -1,6 +1,14 @@
 /* Admin-Simulation mit Backend-API */
 
-const API_BASE = "https://smart-parking-backend-e6e9eccqng5cpda.eastus-01.azurewebsites.net";
+// *** BACKEND-BASIS-URLS ***
+const AZURE_BACKEND = "https://smart-parking-backend-e6e9eccqcng5cpda.eastus-01.azurewebsites.net";
+const LOCAL_BACKEND = "http://127.0.0.1:3000";
+
+// Wenn wir auf der Azure Static Web App laufen -> Azure-Backend
+// Sonst (VS Code Live Server, localhost) -> lokales Backend
+const API_BASE = window.location.hostname.includes("azurestaticapps.net")
+  ? AZURE_BACKEND
+  : LOCAL_BACKEND;
 
 document.addEventListener("DOMContentLoaded", () => {
   const randomOccupyBtn = document.getElementById("randomOccupy");
