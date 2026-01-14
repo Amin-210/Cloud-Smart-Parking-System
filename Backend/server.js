@@ -160,6 +160,15 @@ function freeRandom(lot, n) {
 app.use(express.json());
 app.use(cookieParser());
 
+// Preflight-Requests (OPTIONS) global behandeln
+app.options("*", (req, res) => {
+  // Keine Logik nötig, Azure setzt die CORS-Header,
+  // wir geben nur einen "OK"-Status zurück.
+  res.sendStatus(204);
+});
+
+
+
 // -------- Auth-Middleware --------
 function requireAuth(req, res, next) {
   const sid = req.cookies.sid;
