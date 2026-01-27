@@ -5,6 +5,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
 const sql = require("mssql");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,15 +15,12 @@ console.log("Starte SmartParking-Server...");
 
 // ---------------------------------------------------------------------
 //  SQL-Konfiguration (kommt aus den Umgebungsvariablen in Azure)
-//  + lokale Fallbacks, damit config.server NIE undefined ist
 // ---------------------------------------------------------------------
 const dbConfig = {
-  // wenn ENV gesetzt -> nimm ENV, sonst Fallback (dein Azure-Server)
-  server:
-    process.env.DB_HOST || "smartparking-sqlserver-eu.database.windows.net", // <- dein Server
-  database: process.env.DB_NAME || "smartparkingdb", // <- deine DB
-  user: process.env.DB_USER || "sp_admin",          // <- dein Login
-  password: process.env.DB_PASS || "Projekt22", // HIER dein SQL-Passwort eintragen!
+  server: process.env.DB_HOST,          // z.B. smartparking-sqlserver-eu.database.windows.net
+  database: process.env.DB_NAME,        // z.B. smartparkingdb
+  user: process.env.DB_USER,            // z.B. sp_admin
+  password: process.env.DB_PASS,
   port: Number(process.env.DB_PORT) || 1433,
   options: {
     encrypt: true,            // wichtig für Azure SQL
@@ -30,7 +28,6 @@ const dbConfig = {
   }
 };
 
-// Nur zur Kontrolle (ohne Passwort)
 console.log("DB-Konfiguration:", {
   server: dbConfig.server,
   database: dbConfig.database,
@@ -174,10 +171,22 @@ async function loadLotFromDb() {
 app.use(express.json());
 app.use(cookieParser());
 
-// Preflight-Requests (OPTIONS) global behandeln
-app.options("*", (req, res) => {
-  res.sendStatus(204);
-});
+// CORS für Frontend + Cookies
+app.use(
+  cors({
+    origin: true,          // Origin des Requests spiegeln
+    credentials: true      // Cookies erlauben
+  })
+);
+
+// Preflight-Requests (OPTIONS)
+app.options(
+  "*",
+  cors({
+    origin: true,
+    credentials: true
+  })
+);
 
 // ---------------------------------------------------------------------
 //  Auth-Middleware (Session liegt im Speicher)
@@ -775,7 +784,7 @@ app.post("/api/admin/random-free", async (req, res) => {
   }
 });
 
-// Zufälliges Event (nur Name + eine der beiden Aktionen)
+// Zufälliges Event (Name + eine der beiden Aktionen)
 app.post("/api/admin/random-event", async (req, res) => {
   try {
     const events = [
@@ -789,12 +798,14 @@ app.post("/api/admin/random-event", async (req, res) => {
     const ev = events[Math.floor(Math.random() * events.length)];
 
     if (ev.type === "occupy") {
+      await poolPromise; // Pool sicher initialisiert
       await app._router.handle(
         { method: "POST", url: "/api/admin/random-occupy", body: { count: ev.count } },
         { json: () => {} },
         () => {}
       );
     } else if (ev.type === "free") {
+      await poolPromise;
       await app._router.handle(
         { method: "POST", url: "/api/admin/random-free", body: { count: ev.count } },
         { json: () => {} },
