@@ -60,17 +60,16 @@ function spSetSession(session) {
 
 /* Logout: Backend-Session + Frontend-Session */
 
-function spLogout() {
-  fetch(`${BACKEND_URL}/api/logout`, {
+function spLogout(){
+  fetch("https://smart-parking-backend-e6e9eccqcng5cpda.eastus-01.azurewebsites.net/api/logout", {
     method: "POST",
     credentials: "include"
-  })
-    .catch(() => {})
-    .finally(() => {
-      spSetSession(null);
-      window.location.href = "login.html";
-    });
+  }).catch(() => {}).finally(() => {
+    spSetSession(null);
+    window.location.href = "login.html";
+  });
 }
+
 
 /* Gemeinsame UI verkabeln (Navbar-Buttons) */
 
