@@ -36,20 +36,40 @@ console.log("DB-Konfiguration:", {
 });
 
 // Verbindungspool (wird einmal aufgebaut)
-let poolPromise = sql
-  .connect(dbConfig)
-  .then(pool => {
-    console.log("Mit SQL-Datenbank verbunden.");
-    return pool;
-  })
-  .catch(err => {
-    console.error("Fehler bei SQL-Verbindung:", err);
-    throw err;
-  });
+// ---------------------------------------------------------------------
+//  SQL-Konfiguration (kommt aus den Umgebungsvariablen in Azure)
+// ---------------------------------------------------------------------
+
+
+// Nur zur Kontrolle im Log (ohne Passwort!)
+console.log("DB-Konfiguration:", {
+  server: dbConfig.server,
+  database: dbConfig.database,
+  user: dbConfig.user,
+  port: dbConfig.port
+});
+
+// Verbindungspool – lazy, damit Fehler das Backend nicht sofort killen
+let poolPromise = null;
 
 async function getPool() {
+  if (!poolPromise) {
+    poolPromise = sql.connect(dbConfig)
+      .then(pool => {
+        console.log("Mit SQL-Datenbank verbunden.");
+        return pool;
+      })
+      .catch(err => {
+        console.error("Fehler bei SQL-Verbindung:", err);
+        // Beim nächsten Request nochmal versuchen
+        poolPromise = null;
+        // Fehler weiterwerfen, aber NICHT beim Starten der App
+        throw err;
+      });
+  }
   return poolPromise;
 }
+
 
 // ---------------------------------------------------------------------
 //  In-Memory Sessions (nur für Login, alles andere liegt in SQL)
