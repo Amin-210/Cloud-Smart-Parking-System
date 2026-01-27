@@ -2,39 +2,47 @@
    (Backend hält jetzt Users, Lot, Tickets – hier nur noch UI-Helfer)
 */
 
+// Eigene Backend-URL für dieses File
+const BACKEND_URL = "https://smart-parking-backend-e6e9eccqcng5cpda.eastus-01.azurewebsites.net";
+
 const SP_KEYS = {
   SESSION: "sp_session",
   THEME: "sp_theme"
 };
 
-function spLoad(key, fallback){
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-  catch(e){ return fallback; }
+function spLoad(key, fallback) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch (e) {
+    return fallback;
+  }
 }
-function spSave(key, value){
+
+function spSave(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-function spNowIso(){
+function spNowIso() {
   return new Date().toISOString();
 }
 
-function spFormatDT(iso){
-  if(!iso) return "";
+function spFormatDT(iso) {
+  if (!iso) return "";
   const d = new Date(iso);
-  return d.toLocaleString("de-DE", { hour12:false });
+  return d.toLocaleString("de-DE", { hour12: false });
 }
 
 /* Theme / Dark Mode */
 
-function spApplyTheme(){
+function spApplyTheme() {
   const t = localStorage.getItem(SP_KEYS.THEME) || "light";
-  if(t === "dark") document.body.classList.add("dark-mode");
+  if (t === "dark") document.body.classList.add("dark-mode");
   const btn = document.getElementById("toggleDarkMode");
-  if(btn) btn.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+  if (btn)
+    btn.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
 }
 
-function spToggleTheme(){
+function spToggleTheme() {
   document.body.classList.toggle("dark-mode");
   const t = document.body.classList.contains("dark-mode") ? "dark" : "light";
   localStorage.setItem(SP_KEYS.THEME, t);
@@ -43,35 +51,37 @@ function spToggleTheme(){
 
 /* Session (nur für Frontend-Komfort, Backend nutzt Cookie) */
 
-function spGetSession(){
+function spGetSession() {
   return spLoad(SP_KEYS.SESSION, null);
 }
-function spSetSession(session){
+function spSetSession(session) {
   spSave(SP_KEYS.SESSION, session);
 }
 
 /* Logout: Backend-Session + Frontend-Session */
 
-function spLogout(){
-  fetch("http://127.0.0.1:3000/api/logout", {
+function spLogout() {
+  fetch(`${BACKEND_URL}/api/logout`, {
     method: "POST",
     credentials: "include"
-  }).catch(() => {}).finally(() => {
-    spSetSession(null);
-    window.location.href = "login.html";
-  });
+  })
+    .catch(() => {})
+    .finally(() => {
+      spSetSession(null);
+      window.location.href = "login.html";
+    });
 }
 
 /* Gemeinsame UI verkabeln (Navbar-Buttons) */
 
-function spWireCommonUI(){
+function spWireCommonUI() {
   const themeBtn = document.getElementById("toggleDarkMode");
-  if(themeBtn) themeBtn.addEventListener("click", spToggleTheme);
+  if (themeBtn) themeBtn.addEventListener("click", spToggleTheme);
 
   const logoutBtn = document.getElementById("logoutBtn");
   const session = spGetSession();
-  if(logoutBtn){
-    if(session) logoutBtn.classList.remove("d-none");
+  if (logoutBtn) {
+    if (session) logoutBtn.classList.remove("d-none");
     logoutBtn.addEventListener("click", spLogout);
   }
 
