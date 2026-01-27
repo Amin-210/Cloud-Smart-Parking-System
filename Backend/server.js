@@ -171,22 +171,39 @@ async function loadLotFromDb() {
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS für Frontend + Cookies
-app.use(
-  cors({
-    origin: true,          // Origin des Requests spiegeln
-    credentials: true      // Cookies erlauben
-  })
-);
+/* -------------------------------------------------
+   CORS: Erlaubte Frontend-Origins + Cookies
+--------------------------------------------------*/
 
-// Preflight-Requests (OPTIONS)
-app.options(
-  "*",
-  cors({
-    origin: true,
-    credentials: true
-  })
-);
+const ALLOWED_ORIGINS = [
+  "https://ambitious-ocean-082f71010.1.azurestaticapps.net", // dein Frontend
+  "http://localhost:5500",
+  "http://127.0.0.1:5500"
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,DELETE,OPTIONS"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type"
+    );
+  }
+
+  // Preflight direkt hier beantworten (mit CORS-Headern)
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 // ---------------------------------------------------------------------
 //  Auth-Middleware (Session liegt im Speicher)
