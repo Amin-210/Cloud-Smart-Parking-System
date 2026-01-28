@@ -11,6 +11,9 @@ const sql = require("mssql");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`SmartParking backend running on http://localhost:${PORT}`);
+});
 
 // --- kleiner Start-Log
 console.log("Starte SmartParking-Server...");
